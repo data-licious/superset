@@ -26,39 +26,13 @@ from superset.utils import (
 from superset.connectors.base import BaseDatasource, BaseColumn, BaseMetric
 from superset.models.helpers import AuditMixinNullable, QueryResult, set_perm
 
-class BigQueryTable(Model, BaseDatasource):
-    
-    """ORM object referencing BigQuery Dataset"""
-
-    type = "bigquery"
-    query_language = "json"
-    metric_class = BigQueryMetric
-    column_class = BigQueryColumn
-
-    baselink = "bigquerymodelview"
-
-    __tablename__ = 'bigquery_table'
-    id = Column(Integer, primary_key=True)
-    table_name = Column(String(255), unique=True)
-    is_featured = Column(Boolean, default=False)
-    filter_select_enabled = Column(Boolean, default=False)
-    description = Column(Text)
-    fetch_values_from = Column(String(100))
-    default_endpoint = Column(Text)
-    offset = Column(Integer, default=0)
-    cache_timeout = Column(Integer)
-    params = Column(String(1000))
-    perm = Column(String(1000))
-
-    export_fields = (
-        'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
-    )
-
+from google.cloud import bigquery
 
 class BigQueryColumn(Model, BaseColumn):
-     """ORM model for storing BigQuery Dataset column metadata"""
 
-    __tablename__ = 'bigquery_columns'
+    """ORM model for storing BigQuery Dataset column metadata"""
+
+    __tablename__ = 'bigquery_column'
 
     table_name = Column(
         String(255),
@@ -236,4 +210,33 @@ class BigQueryMetric(Model, BaseMetric):
                 BigQueryMetric.metric_name == lookup_metric.metric_name).first()
         return import_util.import_simple_obj(db.session, i_metric, lookup_obj)
 
+class BigQueryTable(Model, BaseDatasource):
+    
+    """ORM object referencing BigQuery Dataset"""
 
+    type = "bigquery"
+    query_language = "json"
+    metric_class = BigQueryMetric
+    column_class = BigQueryColumn
+
+    baselink = "bigquerymodelview"
+
+    __tablename__ = 'bigquery_table'
+    id = Column(Integer, primary_key=True)
+    table_name = Column(String(255), unique=True)
+    is_featured = Column(Boolean, default=False)
+    filter_select_enabled = Column(Boolean, default=False)
+    description = Column(Text)
+    fetch_values_from = Column(String(100))
+    default_endpoint = Column(Text)
+    offset = Column(Integer, default=0)
+    cache_timeout = Column(Integer)
+    params = Column(String(1000))
+    perm = Column(String(1000))
+
+    export_fields = (
+        'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
+    )
+
+sa.event.listen(BigQueryTable, 'after_insert', set_perm)
+sa.event.listen(BigQueryTable, 'after_update', set_perm)

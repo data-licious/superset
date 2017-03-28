@@ -17,12 +17,12 @@ import sqlalchemy as sa
 def upgrade():
     op.create_table('bigquery_table',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('table_name', sa.String(length=255), nullable=True),
+    sa.Column('project_id', sa.String(length=255), nullable=False),
+    sa.Column('dataset_name', sa.String(length=255), nullable=False),
+    sa.Column('table_name', sa.String(length=255), nullable=False),
     sa.Column('is_featured', sa.Boolean(), nullable=True),
     sa.Column('filter_select_enabled', sa.Boolean(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('fetch_values_from', sa.String(length=100), nullable=True),
-    sa.Column('default_endpoint', sa.Text(), nullable=True),
     sa.Column('user_id', sa.Integer(), sa.ForeignKey("ab_user.id"), nullable=True),
     sa.Column('offset', sa.Integer(), default=0),
     sa.Column('cache_timeout', sa.Integer(), nullable=True),
@@ -33,12 +33,12 @@ def upgrade():
     sa.Column('created_by_fk', sa.Integer(), sa.ForeignKey("ab_user.id"), nullable=True),
     sa.Column('changed_by_fk', sa.Integer(), sa.ForeignKey("ab_user.id"), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('table_name')
+    sa.UniqueConstraint('project_id', 'dataset_name', 'table_name')
     )
 
     op.create_table('bigquery_column',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('table_name', sa.String(length=255), sa.ForeignKey("bigquery_table.table_name"), nullable=True),
+    sa.Column('table_id', sa.String(length=255), sa.ForeignKey("bigquery_table.id"), nullable=True),
     sa.Column('column_name', sa.String(length=255), nullable=True),
     sa.Column('verbose_name', sa.String(length=1024), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
@@ -64,7 +64,7 @@ def upgrade():
     sa.Column('metric_name', sa.String(length=512), nullable=True),
     sa.Column('verbose_name', sa.String(length=1024), nullable=True),
     sa.Column('metric_type', sa.String(length=32), nullable=True),
-    sa.Column('table_name', sa.String(length=255), sa.ForeignKey("bigquery_table.table_name"), nullable=True),
+    sa.Column('table_id', sa.String(length=255), sa.ForeignKey("bigquery_table.id"), nullable=True),
     sa.Column('json', sa.Text(), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('d3format', sa.String(length=128), nullable=True),
@@ -73,7 +73,6 @@ def upgrade():
     sa.Column('changed_on', sa.DateTime(), nullable=False),
     sa.Column('created_by_fk', sa.Integer(), sa.ForeignKey("ab_user.id"), nullable=True),
     sa.Column('changed_by_fk', sa.Integer(), sa.ForeignKey("ab_user.id"), nullable=True),
-    sa.ForeignKeyConstraint(['table_name'], ['bigquery_table.table_name'], ),
     sa.PrimaryKeyConstraint('id')
     )
     pass

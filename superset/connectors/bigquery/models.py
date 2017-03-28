@@ -223,12 +223,12 @@ class BigQueryTable(Model, BaseDatasource):
 
     __tablename__ = 'bigquery_table'
     id = Column(Integer, primary_key=True)
-    table_name = Column(String(255), unique=True)
+    project_id = Column(String(255), unique=False)
+    dataset_name = Column(String(255), unique=False)
+    table_name = Column(String(255), unique=False)
     is_featured = Column(Boolean, default=False)
     filter_select_enabled = Column(Boolean, default=False)
     description = Column(Text)
-    fetch_values_from = Column(String(100))
-    default_endpoint = Column(Text)
     user_id = Column(Integer, ForeignKey('ab_user.id'))
     owner = relationship(
         'User',
@@ -240,7 +240,7 @@ class BigQueryTable(Model, BaseDatasource):
     perm = Column(String(1000))
 
     export_fields = (
-        'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
+        'project_id', 'dataset_name', 'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
     )
 
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)

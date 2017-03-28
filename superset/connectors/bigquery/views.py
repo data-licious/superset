@@ -101,9 +101,8 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
         'changed_on_', 'offset']
     related_views = [BigQueryColumnInlineView, BigQueryMetricInlineView]
     edit_columns = [
-        'table_name', 'description', 'is_featured',
-        'filter_select_enabled', 'fetch_values_from',
-        'default_endpoint', 'offset', 'cache_timeout']
+        'project_id', 'dataset_name', 'table_name', 'description', 'is_featured',
+        'filter_select_enabled', 'offset', 'cache_timeout']
     add_columns = edit_columns
     show_columns = add_columns + ['perm']
     page_size = 500
@@ -118,7 +117,6 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
         'description': _("Description"),
         'is_featured': _("Is Featured"),
         'filter_select_enabled': _("Enable Filter Select"),
-        'default_endpoint': _("Default Endpoint"),
         'offset': _("Time Offset"),
         'cache_timeout': _("Cache Timeout"),
     }

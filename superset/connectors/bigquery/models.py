@@ -159,6 +159,7 @@ class BigQueryColumn(Model, BaseColumn):
     @classmethod
     def import_obj(cls, i_column):
         def lookup_obj(lookup_column):
+            # @TODO need changes
             return db.session.query(BigQueryColumn).filter(
                 BigQueryColumn.table_name == lookup_column.table_name,
                 BigQueryColumn.column_name == lookup_column.column_name).first()

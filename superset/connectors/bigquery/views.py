@@ -19,7 +19,7 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'column_name', 'description', 'dimension_spec_json', 'table_id',
+        'column_name', 'description', 'dimension_spec_json',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
@@ -30,7 +30,6 @@ class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     label_columns = {
         'column_name': _("Column"),
         'type': _("Type"),
-        'table_id': _("Table"),
         'groupby': _("Groupable"),
         'filterable': _("Filterable"),
         'count_distinct': _("Count Distinct"),
@@ -58,8 +57,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryMetric)
     list_columns = ['metric_name', 'verbose_name', 'metric_type']
     edit_columns = [
-        'metric_name', 'description', 'verbose_name', 'metric_type', 'json',
-        'table_id', 'd3format', 'is_restricted']
+        'metric_name', 'description', 'verbose_name', 'metric_type', 'json', 'd3format', 'is_restricted']
     add_columns = edit_columns
     page_size = 500
     validators_columns = {
@@ -67,7 +65,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     }
     description_columns = {
         'metric_type': utils.markdown(
-            "use `postagg` as the metric type if you are defining a ",
+            "",
             True),
         'is_restricted': _("Whether the access to this metric is restricted "
                            "to certain roles. Only roles with the permission "
@@ -80,7 +78,6 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'verbose_name': _("Verbose Name"),
         'metric_type': _("Type"),
         'json': _("JSON"),
-        'table_id': _("Table"),
     }
 
     def post_add(self, metric):
@@ -133,14 +130,14 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
             raise Exception(get_datasource_exist_error_mgs(
                 datasource.full_name))
 
-    def post_add(self, datasource):
-        datasource.generate_metrics()
-        security.merge_perm(sm, 'datasource_access', datasource.get_perm())
-        if datasource.schema:
-            security.merge_perm(sm, 'schema_access', datasource.schema_perm)
+    def post_add(self, table):
+        table.generate_metrics()
+        security.merge_perm(sm, 'table_access', table.get_perm())
+        if table.schema:
+            security.merge_perm(sm, 'schema_access', table.schema_perm)
 
-    def post_update(self, datasource):
-        self.post_add(datasource)
+    def post_update(self, table):
+        self.post_add(table)
 
 appbuilder.add_view(
     BigQueryTableModelView,

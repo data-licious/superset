@@ -580,7 +580,3 @@ def setup_cache(app, cache_config):
     """Setup the flask-cache on a flask app"""
     if cache_config and cache_config.get('CACHE_TYPE') != 'null':
         return Cache(app, config=cache_config)
-
-def get_bigquery_table_full_name(project_id, dataset_name, table_name):
-    return "%s:%s.%s" % (project_id, dataset_name, table_name)
-

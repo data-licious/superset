@@ -307,15 +307,6 @@ appbuilder.add_view(
     category_label=__("Sources"),
     category_icon='fa-database',)
 
-# appbuilder.add_view(
-#     DatabaseView,
-#     "BigQuery Table",
-#     label=__("BigQuery Table"),
-#     icon="fa-table",
-#     category="Sources",
-#     category_label=__("Sources"),
-#     category_icon='fa-database',)
-
 
 class DatabaseAsync(DatabaseView):
     list_columns = [

@@ -28,24 +28,24 @@ from superset.models.helpers import AuditMixinNullable, QueryResult, set_perm
 
 from google.cloud import bigquery
 
+
 class BigQueryColumn(Model, BaseColumn):
 
     """ORM model for storing BigQuery Dataset column metadata"""
 
     __tablename__ = 'bigquery_column'
 
-    table_id = Column(
-        String(255),
-        ForeignKey('bigquery_table.id'))
-    # Setting enable_typechecks=False disables polymorphic inheritance.
+    table_name = Column(String(255), ForeignKey('bigquery_table.table_name'))
+
     table = relationship(
         'BigQueryTable',
-        backref=backref('columns', cascade='all, delete-orphan'),
+        backref=backref('bigquery_column', cascade='all, delete-orphan'),
         enable_typechecks=False)
+
     dimension_spec_json = Column(Text)
 
     export_fields = (
-        'table_id', 'column_name', 'is_active', 'type', 'groupby',
+        'table_name', 'column_name', 'is_active', 'type', 'groupby',
         'count_distinct', 'sum', 'avg', 'max', 'min', 'filterable',
         'description', 'dimension_spec_json'
     )
@@ -172,9 +172,7 @@ class BigQueryMetric(Model, BaseMetric):
 
     __tablename__ = 'bigquery_metric'
 
-    table_id = Column(
-        String(255),
-        ForeignKey('bigquery_table.id'))
+    table_name = Column(String(255), ForeignKey('bigquery_table.table_name'))
 
     table = relationship(
         'BigQueryTable',
@@ -183,7 +181,7 @@ class BigQueryMetric(Model, BaseMetric):
     json = Column(Text)
 
     export_fields = (
-        'metric_name', 'verbose_name', 'metric_type', 'table_id',
+        'metric_name', 'verbose_name', 'metric_type', 'table_name',
         'json', 'description', 'is_restricted', 'd3format'
     )
 
@@ -200,8 +198,8 @@ class BigQueryMetric(Model, BaseMetric):
         return (
             "{parent_name}.[{obj.metric_name}](id:{obj.id})"
         ).format(obj=self,
-                 parent_name=self.dataset.full_name
-                 ) if self.dataset else None
+                 parent_name=self.table.full_name
+                 ) if self.table else None
 
     @classmethod
     def import_obj(cls, i_metric):
@@ -224,9 +222,7 @@ class BigQueryTable(Model, BaseDatasource):
 
     __tablename__ = 'bigquery_table'
     id = Column(Integer, primary_key=True)
-    project_id = Column(String(255), unique=False)
-    dataset_name = Column(String(255), unique=False)
-    table_name = Column(String(255), unique=False)
+    table_name = Column(String(255), unique=True)
     is_featured = Column(Boolean, default=False)
     filter_select_enabled = Column(Boolean, default=False)
     description = Column(Text)
@@ -241,7 +237,7 @@ class BigQueryTable(Model, BaseDatasource):
     perm = Column(String(1000))
 
     export_fields = (
-        'project_id', 'dataset_name', 'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
+        'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
     )
 
     @property
@@ -260,7 +256,7 @@ class BigQueryTable(Model, BaseDatasource):
 
     @property
     def name(self):
-        return utils.get_bigquery_table_full_name(self.project_id, self.dataset_name, self.table_name)
+        return self.table_name
 
     @property
     def schema(self):

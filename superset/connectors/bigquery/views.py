@@ -19,15 +19,16 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'column_name', 'description', 'dimension_spec_json',
+       'table', 'column_name', 'description', 'dimension_spec_json',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
-        'column_name', 'type', 'groupby', 'filterable', 'count_distinct',
+        'table', 'column_name', 'type', 'groupby', 'filterable', 'count_distinct',
         'sum', 'min', 'max']
     can_delete = False
     page_size = 500
     label_columns = {
+        'table': _("BigQuery Table"),
         'column_name': _("Column"),
         'type': _("Type"),
         'groupby': _("Groupable"),
@@ -55,9 +56,9 @@ appbuilder.add_view_no_menu(BigQueryColumnInlineView)
 
 class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryMetric)
-    list_columns = ['metric_name', 'verbose_name', 'metric_type']
+    list_columns = ['table', 'metric_name', 'verbose_name', 'metric_type']
     edit_columns = [
-        'metric_name', 'description', 'verbose_name', 'metric_type', 'json', 'd3format', 'is_restricted']
+        'table', 'metric_name', 'description', 'verbose_name', 'metric_type', 'json', 'd3format', 'is_restricted']
     add_columns = edit_columns
     page_size = 500
     validators_columns = {
@@ -73,6 +74,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
                            "are allowed to access this metric"),
     }
     label_columns = {
+        'table': _("BigQuery Table"),
         'metric_name': _("Metric"),
         'description': _("Description"),
         'verbose_name': _("Verbose Name"),
@@ -93,12 +95,12 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     datamodel = SQLAInterface(models.BigQueryTable)
     list_widget = ListWidgetWithCheckboxes
     list_columns = [
-        'changed_by_', 'changed_on_', 'offset']
+        'table_name', 'changed_by_', 'changed_on_', 'offset']
     order_columns = [
         'changed_on_', 'offset']
     related_views = [BigQueryColumnInlineView, BigQueryMetricInlineView]
     edit_columns = [
-        'project_id', 'dataset_name', 'table_name', 'description', 'is_featured',
+        'table_name', 'description', 'is_featured',
         'filter_select_enabled', 'offset', 'cache_timeout']
     add_columns = edit_columns
     show_columns = add_columns + ['perm']
@@ -111,6 +113,7 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     }
     base_filters = [['id', DatasourceFilter, lambda: []]]
     label_columns = {
+        'table_name': _("BigQuery Table"),
         'description': _("Description"),
         'is_featured': _("Is Featured"),
         'filter_select_enabled': _("Enable Filter Select"),

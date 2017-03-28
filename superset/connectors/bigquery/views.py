@@ -19,7 +19,7 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'column_name', 'description', 'dimension_spec_json', 'table_name',
+        'column_name', 'description', 'dimension_spec_json', 'table_id',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
@@ -30,7 +30,7 @@ class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     label_columns = {
         'column_name': _("Column"),
         'type': _("Type"),
-        'table_name': _("Table"),
+        'table_id': _("Table"),
         'groupby': _("Groupable"),
         'filterable': _("Filterable"),
         'count_distinct': _("Count Distinct"),
@@ -59,7 +59,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     list_columns = ['metric_name', 'verbose_name', 'metric_type']
     edit_columns = [
         'metric_name', 'description', 'verbose_name', 'metric_type', 'json',
-        'table_name', 'd3format', 'is_restricted']
+        'table_id', 'd3format', 'is_restricted']
     add_columns = edit_columns
     page_size = 500
     validators_columns = {
@@ -80,7 +80,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'verbose_name': _("Verbose Name"),
         'metric_type': _("Type"),
         'json': _("JSON"),
-        'table_name': _("Table"),
+        'table_id': _("Table"),
     }
 
     def post_add(self, metric):

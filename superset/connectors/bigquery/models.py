@@ -34,18 +34,18 @@ class BigQueryColumn(Model, BaseColumn):
 
     __tablename__ = 'bigquery_column'
 
-    table_name = Column(
+    table_id = Column(
         String(255),
-        ForeignKey('bigquery_table.table_name'))
+        ForeignKey('bigquery_table.id'))
     # Setting enable_typechecks=False disables polymorphic inheritance.
-    dataset = relationship(
+    table = relationship(
         'BigQueryTable',
         backref=backref('columns', cascade='all, delete-orphan'),
         enable_typechecks=False)
     dimension_spec_json = Column(Text)
 
     export_fields = (
-        'table_name', 'column_name', 'is_active', 'type', 'groupby',
+        'table_id', 'column_name', 'is_active', 'type', 'groupby',
         'count_distinct', 'sum', 'avg', 'max', 'min', 'filterable',
         'description', 'dimension_spec_json'
     )
@@ -171,9 +171,9 @@ class BigQueryMetric(Model, BaseMetric):
 
     __tablename__ = 'bigquery_metric'
 
-    table_name = Column(
+    table_id = Column(
         String(255),
-        ForeignKey('bigquery_table.table_name'))
+        ForeignKey('bigquery_table.id'))
 
     table = relationship(
         'BigQueryTable',
@@ -182,7 +182,7 @@ class BigQueryMetric(Model, BaseMetric):
     json = Column(Text)
 
     export_fields = (
-        'metric_name', 'verbose_name', 'metric_type', 'table_name',
+        'metric_name', 'verbose_name', 'metric_type', 'table_id',
         'json', 'description', 'is_restricted', 'd3format'
     )
 
@@ -206,7 +206,7 @@ class BigQueryMetric(Model, BaseMetric):
     def import_obj(cls, i_metric):
         def lookup_obj(lookup_metric):
             return db.session.query(BigQueryMetric).filter(
-                BigQueryMetric.table_name == lookup_metric.table_name,
+                BigQueryMetric.table_id == lookup_metric.table_id,
                 BigQueryMetric.metric_name == lookup_metric.metric_name).first()
         return import_util.import_simple_obj(db.session, i_metric, lookup_obj)
 

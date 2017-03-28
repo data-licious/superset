@@ -35,13 +35,14 @@ setup(
     name='superset',
     description=(
         "A interactive data visualization platform build on SqlAlchemy "
-        "and druid.io"),
+        "druid.io and Google BigQuery"),
     version=version_string,
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     scripts=['superset/bin/superset'],
     install_requires=[
+        'Flask', # Add version
         'boto3==1.4.4',
         'celery==3.1.23',
         'cryptography==1.7.2',
@@ -67,6 +68,7 @@ setup(
         'sqlparse==0.1.19',
         'thrift>=0.9.3',
         'thrift-sasl>=0.2.1',
+        'google-cloud-bigquery', # Add version
     ],
     extras_require={
         'cors': ['Flask-Cors>=2.0.0'],
@@ -76,6 +78,9 @@ setup(
         'coverage',
         'mock',
         'nose',
+    ],
+    setup_requires=[
+        'nose>=1.0'
     ],
     author='Maxime Beauchemin',
     author_email='maximebeauchemin@gmail.com',

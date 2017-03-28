@@ -175,7 +175,7 @@ class BigQueryMetric(Model, BaseMetric):
         String(255),
         ForeignKey('bigquery_table.table_name'))
 
-    dataset = relationship(
+    table = relationship(
         'BigQueryTable',
         backref=backref('bigquery_metric', cascade='all, delete-orphan'),
         enable_typechecks=False)
@@ -229,6 +229,11 @@ class BigQueryTable(Model, BaseDatasource):
     description = Column(Text)
     fetch_values_from = Column(String(100))
     default_endpoint = Column(Text)
+    user_id = Column(Integer, ForeignKey('ab_user.id'))
+    owner = relationship(
+        'User',
+        backref=backref('bigquery_table', cascade='all, delete-orphan'),
+        foreign_keys=[user_id])
     offset = Column(Integer, default=0)
     cache_timeout = Column(Integer)
     params = Column(String(1000))

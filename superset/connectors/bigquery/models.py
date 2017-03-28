@@ -243,5 +243,59 @@ class BigQueryTable(Model, BaseDatasource):
         'project_id', 'dataset_name', 'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
     )
 
+    @property
+    def metrics_combo(self):
+        return sorted(
+            [(m.metric_name, m.verbose_name) for m in self.metrics],
+            key=lambda x: x[1])
+
+    @property
+    def database(self):
+        return self.cluster
+
+    @property
+    def num_cols(self):
+        return [c.column_name for c in self.columns if c.is_num]
+
+    @property
+    def name(self):
+        return utils.get_bigquery_table_full_name(self.project_id, self.dataset_name, self.table_name)
+
+    @property
+    def schema(self):
+        return self.table_name
+
+    @property
+    def schema_perm(self):
+        """Returns schema permission if present, cluster one otherwise."""
+        return utils.get_schema_perm(self.cluster, self.schema)
+
+    def get_perm(self):
+        return self.name
+
+    @property
+    def link(self):
+        name = escape(self.name)
+        return Markup('<a href="{self.url}">{name}</a>').format(**locals())
+
+    @property
+    def full_name(self):
+        return name
+
+    @property
+    def time_column_grains(self):
+        return {
+            "time_columns": [
+                'all', '5 seconds', '30 seconds', '1 minute',
+                '5 minutes', '1 hour', '6 hour', '1 day', '7 days',
+                'week', 'week_starting_sunday', 'week_ending_saturday',
+                'month',
+            ],
+            "time_grains": ['now']
+        }
+
+    def __repr__(self):
+        return self.name
+
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)
 sa.event.listen(BigQueryTable, 'after_update', set_perm)

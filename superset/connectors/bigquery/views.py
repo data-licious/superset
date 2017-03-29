@@ -21,10 +21,11 @@ from superset.views.base import (
 
 from . import models
 
+
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-       'table', 'column_name', 'description', 'dimension_spec_json',
+        'table', 'column_name', 'description', 'dimension_spec_json',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
@@ -55,6 +56,7 @@ class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
 
     def post_add(self, col):
         self.post_update(col)
+
 
 appbuilder.add_view_no_menu(BigQueryColumnInlineView)
 
@@ -96,13 +98,14 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
 
 appbuilder.add_view_no_menu(BigQueryMetricInlineView)
 
+
 class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     datamodel = SQLAInterface(models.BigQueryTable)
     list_widget = ListWidgetWithCheckboxes
     list_columns = [
-        'project_id', 'dataset_name', 'table_name', 'changed_by_', 'changed_on_', 'offset', 'metadata_last_refreshed']
+        'datasource_link', 'changed_by_', 'changed_on_', 'offset', 'metadata_last_refreshed']
     order_columns = [
-        'changed_on_', 'offset']
+        'datasource_link', 'changed_on_', 'offset']
     related_views = [BigQueryColumnInlineView, BigQueryMetricInlineView]
     edit_columns = [
         'project_id', 'dataset_name', 'table_name', 'description', 'is_featured',
@@ -118,7 +121,7 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     }
     base_filters = [['id', DatasourceFilter, lambda: []]]
     label_columns = {
-        'table_name': _("BigQuery Table"),
+        'datasource_link': _("BigQuery Table"),
         'description': _("Description"),
         'is_featured': _("Is Featured"),
         'filter_select_enabled': _("Enable Filter Select"),
@@ -130,7 +133,7 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
         number_of_existing_tables = db.session.query(
             sqla.func.count('*')).filter(
             models.BigQueryTable.table_name ==
-                table.table_name
+            table.table_name
         ).scalar()
 
         # table object is already added to the session
@@ -140,12 +143,13 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
 
     def post_add(self, table):
         table.generate_metrics()
-        security.merge_perm(sm, 'table_access', table.get_perm())
+        security.merge_perm(sm, 'datasource_access', table.get_perm())
         if table.schema:
             security.merge_perm(sm, 'schema_access', table.schema_perm)
 
     def post_update(self, table):
         self.post_add(table)
+
 
 appbuilder.add_view(
     BigQueryTableModelView,
@@ -179,6 +183,7 @@ class BigQuery(BaseSupersetView):
                 "Refreshed metadata from %s" % table.name, 'info')
         session.commit()
         return redirect("/bigquerytablemodelview/list/")
+
 
 appbuilder.add_view_no_menu(BigQuery)
 

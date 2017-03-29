@@ -38,7 +38,7 @@ class BigQueryColumn(Model, BaseColumn):
 
     table = relationship(
         'BigQueryTable',
-        backref=backref('bigquery_column', cascade='all, delete-orphan'),
+        backref=backref('columns', cascade='all, delete-orphan'),
         enable_typechecks=False, foreign_keys=[table_id])
 
     dimension_spec_json = Column(Text)
@@ -175,7 +175,7 @@ class BigQueryMetric(Model, BaseMetric):
 
     table = relationship(
         'BigQueryTable',
-        backref=backref('bigquery_metric', cascade='all, delete-orphan'),
+        backref=backref('metrics', cascade='all, delete-orphan'),
         enable_typechecks=False, foreign_keys=[table_id])
     json = Column(Text)
 
@@ -214,7 +214,7 @@ class BigQueryTable(Model, BaseDatasource):
     """ORM object referencing BigQuery Dataset"""
 
     type = "bigquery"
-    query_language = "json"
+    query_language = "sql"
     metric_class = BigQueryMetric
     column_class = BigQueryColumn
 
@@ -251,7 +251,7 @@ class BigQueryTable(Model, BaseDatasource):
 
     @property
     def database(self):
-        return self.cluster
+        return self
 
     @property
     def num_cols(self):
@@ -263,6 +263,10 @@ class BigQueryTable(Model, BaseDatasource):
 
     @property
     def schema(self):
+        return self.name
+
+    @property
+    def datasource_name(self):
         return self.name
 
     @property
@@ -296,6 +300,12 @@ class BigQueryTable(Model, BaseDatasource):
 
     def __repr__(self):
         return self.name
+
+    @renders('table_name')
+    def datasource_link(self):
+        url = "/superset/explore/{obj.type}/{obj.id}/".format(obj=self)
+        name = escape(self.name)
+        return Markup('<a href="{url}">{name}</a>'.format(**locals()))
 
     def refresh_metadata(self):
         """
@@ -339,6 +349,7 @@ class BigQueryTable(Model, BaseDatasource):
                 pass
 
             bigquery_column.generate_metrics()
+            self.columns.append(bigquery_column)
             session.flush()
 
 

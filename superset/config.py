@@ -183,10 +183,11 @@ DRUID_DATA_SOURCE_BLACKLIST = []
 DEFAULT_MODULE_DS_MAP = {
     'superset.connectors.druid.models': ['DruidDatasource'],
     'superset.connectors.sqla.models': ['SqlaTable'],
-    'superset.connectors.bigquery.models': ['BigQueryTable'],
 }
 
-ADDITIONAL_MODULE_DS_MAP = {}
+ADDITIONAL_MODULE_DS_MAP = {
+    'superset.connectors.bigquery.models': ['BigQueryTable'],
+}
 ADDITIONAL_MIDDLEWARE = []
 
 """

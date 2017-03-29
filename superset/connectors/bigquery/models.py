@@ -30,22 +30,21 @@ from google.cloud import bigquery
 
 
 class BigQueryColumn(Model, BaseColumn):
-
     """ORM model for storing BigQuery Dataset column metadata"""
 
     __tablename__ = 'bigquery_column'
 
-    table_name = Column(String(255), ForeignKey('bigquery_table.table_name'))
+    table_id = Column(Integer(), ForeignKey('bigquery_table.id'))
 
     table = relationship(
         'BigQueryTable',
         backref=backref('bigquery_column', cascade='all, delete-orphan'),
-        enable_typechecks=False)
+        enable_typechecks=False, foreign_keys=[table_id])
 
     dimension_spec_json = Column(Text)
 
     export_fields = (
-        'table_name', 'column_name', 'is_active', 'type', 'groupby',
+        'column_name', 'is_active', 'type', 'groupby',
         'count_distinct', 'sum', 'avg', 'max', 'min', 'filterable',
         'description', 'dimension_spec_json'
     )
@@ -69,9 +68,9 @@ class BigQueryColumn(Model, BaseColumn):
             json=json.dumps({'type': 'count', 'name': 'count'})
         ))
 
-        #Verify this block
+        # @TODO Verify this block
         if self.type in ('DOUBLE', 'FLOAT'):
-            corrected_type = 'DOUBLE' 
+            corrected_type = 'DOUBLE'
         else:
             corrected_type = self.type
 
@@ -146,11 +145,11 @@ class BigQueryColumn(Model, BaseColumn):
         for metric in metrics:
             m = (
                 session.query(M)
-                .filter(M.metric_name == metric.metric_name)
-                .filter(M.table_name == self.table_name)
-                .first()
+                    .filter(M.metric_name == metric.metric_name)
+                    .filter(M.table_id == self.table_id)
+                    .first()
             )
-            metric.table_name = self.table_name
+            metric.table_id = self.table_id
             if not m:
                 new_metrics.append(metric)
                 session.add(metric)
@@ -161,27 +160,27 @@ class BigQueryColumn(Model, BaseColumn):
         def lookup_obj(lookup_column):
             # @TODO need changes
             return db.session.query(BigQueryColumn).filter(
-                BigQueryColumn.table_name == lookup_column.table_name,
+                BigQueryColumn.table_id == lookup_column.table_id,
                 BigQueryColumn.column_name == lookup_column.column_name).first()
 
         return import_util.import_simple_obj(db.session, i_column, lookup_obj)
-    
+
 
 class BigQueryMetric(Model, BaseMetric):
     """ORM object referencing BigQuery metrics for a dataset"""
 
     __tablename__ = 'bigquery_metric'
 
-    table_name = Column(String(255), ForeignKey('bigquery_table.table_name'))
+    table_id = Column(Integer, ForeignKey('bigquery_table.id'))
 
     table = relationship(
         'BigQueryTable',
         backref=backref('bigquery_metric', cascade='all, delete-orphan'),
-        enable_typechecks=False)
+        enable_typechecks=False, foreign_keys=[table_id])
     json = Column(Text)
 
     export_fields = (
-        'metric_name', 'verbose_name', 'metric_type', 'table_name',
+        'metric_name', 'verbose_name', 'metric_type',
         'json', 'description', 'is_restricted', 'd3format'
     )
 
@@ -207,10 +206,11 @@ class BigQueryMetric(Model, BaseMetric):
             return db.session.query(BigQueryMetric).filter(
                 BigQueryMetric.table_id == lookup_metric.table_id,
                 BigQueryMetric.metric_name == lookup_metric.metric_name).first()
+
         return import_util.import_simple_obj(db.session, i_metric, lookup_obj)
 
+
 class BigQueryTable(Model, BaseDatasource):
-    
     """ORM object referencing BigQuery Dataset"""
 
     type = "bigquery"
@@ -222,7 +222,9 @@ class BigQueryTable(Model, BaseDatasource):
 
     __tablename__ = 'bigquery_table'
     id = Column(Integer, primary_key=True)
-    table_name = Column(String(255), unique=True)
+    project_id = Column(String(255), unique=False)
+    dataset_name = Column(String(255), unique=False)
+    table_name = Column(String(255), unique=False)
     is_featured = Column(Boolean, default=False)
     filter_select_enabled = Column(Boolean, default=False)
     description = Column(Text)
@@ -235,9 +237,10 @@ class BigQueryTable(Model, BaseDatasource):
     cache_timeout = Column(Integer)
     params = Column(String(1000))
     perm = Column(String(1000))
+    metadata_last_refreshed = Column(DateTime)
 
     export_fields = (
-        'table_name', 'description', 'is_featured', 'offset', 'cache_timeout', 'params'
+        'project_id', 'dataset_name', 'table_name', 'description', 'is_featured', 'offset', 'cache_timeout', 'params'
     )
 
     @property
@@ -256,11 +259,11 @@ class BigQueryTable(Model, BaseDatasource):
 
     @property
     def name(self):
-        return self.table_name
+        return utils.get_bigquery_table_full_name(self.project_id, self.dataset_name, self.table_name)
 
     @property
     def schema(self):
-        return self.table_name
+        return self.name
 
     @property
     def schema_perm(self):
@@ -277,7 +280,7 @@ class BigQueryTable(Model, BaseDatasource):
 
     @property
     def full_name(self):
-        return name
+        return self.name
 
     @property
     def time_column_grains(self):
@@ -293,6 +296,51 @@ class BigQueryTable(Model, BaseDatasource):
 
     def __repr__(self):
         return self.name
+
+    def refresh_metadata(self):
+        """
+            Refresh metadata of BigQuery Table
+        """
+
+        logging.info("Syncing BigQuery table metadata {}".format(self.table_name))
+        session = get_session()
+        flasher("Refreshing table {}".format(self.table_name), "info")
+        session.flush()
+
+        client = bigquery.Client(self.project_id)
+        dataset = client.dataset(self.dataset_name)
+        bigquery_table = dataset.table(self.table_name)
+        bigquery_table.reload()
+
+        for column in bigquery_table.schema:
+            bigquery_column = (
+                session
+                    .query(BigQueryColumn)
+                    .filter_by(table_id=self.id, column_name=column.name)
+                    .first()
+            )
+            if not bigquery_column:
+                bigquery_column = BigQueryColumn(table_id=self.id, column_name=column.name, type=column.field_type)
+                bigquery_column.verbose_name = bigquery_column.column_name
+                bigquery_column.description = column.description
+
+                session.add(bigquery_column)
+
+            if column.field_type == "STRING":
+                bigquery_column.groupby = True
+                bigquery_column.filterable = True
+            elif column.field_type == "INTEGER":
+                bigquery_column.sum = True
+                bigquery_column.min = True
+                bigquery_column.max = True
+                bigquery_column.avg = True
+            elif column.field_type == "RECORD":
+                # @TODO implement recursive field check
+                pass
+
+            bigquery_column.generate_metrics()
+            session.flush()
+
 
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)
 sa.event.listen(BigQueryTable, 'after_update', set_perm)

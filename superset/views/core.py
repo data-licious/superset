@@ -116,7 +116,7 @@ def is_owner(obj, user):
     return obj and obj.owners and user in obj.owners
 
 
-def check_ownership(obj, raise_if_false=True):
+def check_ownership(obj, raise_if_false =True):
     """Meant to be used in `pre_update` hooks on models to enforce ownership
 
     Admin have all access, and other users need to be referenced on either

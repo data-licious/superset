@@ -1,7 +1,10 @@
+from datetime import datetime
+import logging
+
 import sqlalchemy as sqla
 
-from flask import Markup
-from flask_appbuilder import CompactCRUDMixin
+from flask import Markup, flash, redirect
+from flask_appbuilder import CompactCRUDMixin, expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 
 from flask_babel import lazy_gettext as _
@@ -9,12 +12,14 @@ from flask_babel import gettext as __
 
 import superset
 from superset import db, utils, appbuilder, sm, security
+from superset.connectors.connector_registry import ConnectorRegistry
+from superset.utils import has_access
+from superset.views.base import BaseSupersetView
 from superset.views.base import (
     SupersetModelView, validate_json, DeleteMixin, ListWidgetWithCheckboxes,
     DatasourceFilter, get_datasource_exist_error_mgs)
 
 from . import models
-
 
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
@@ -95,12 +100,12 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     datamodel = SQLAInterface(models.BigQueryTable)
     list_widget = ListWidgetWithCheckboxes
     list_columns = [
-        'table_name', 'changed_by_', 'changed_on_', 'offset']
+        'project_id', 'dataset_name', 'table_name', 'changed_by_', 'changed_on_', 'offset', 'metadata_last_refreshed']
     order_columns = [
         'changed_on_', 'offset']
     related_views = [BigQueryColumnInlineView, BigQueryMetricInlineView]
     edit_columns = [
-        'table_name', 'description', 'is_featured',
+        'project_id', 'dataset_name', 'table_name', 'description', 'is_featured',
         'filter_select_enabled', 'offset', 'cache_timeout']
     add_columns = edit_columns
     show_columns = add_columns + ['perm']
@@ -149,3 +154,41 @@ appbuilder.add_view(
     category="Sources",
     category_label=__("Sources"),
     icon="fa-table")
+
+
+class BigQuery(BaseSupersetView):
+    """The base views for Superset!"""
+
+    @has_access
+    @expose("/refresh_metadata/")
+    def refresh_metadata(self):
+        """endpoint that refreshes BigQuery Table metadata"""
+        session = db.session()
+        for table in session.query(ConnectorRegistry.sources['bigquery']).all():
+            try:
+                table.refresh_metadata()
+            except Exception as e:
+                flash(
+                    "Error while processing table '{}'\n{}".format(
+                        table.table_name, utils.error_msg_from_exception(e)),
+                    "danger")
+                logging.exception(e)
+                return redirect('/bigquerytablemodelview/list/')
+            table.metadata_last_refreshed = datetime.now()
+            flash(
+                "Refreshed metadata from %s" % table.name, 'info')
+        session.commit()
+        return redirect("/bigquerytablemodelview/list/")
+
+appbuilder.add_view_no_menu(BigQuery)
+
+appbuilder.add_link(
+    "Refresh BigQuery Table Metadata",
+    label=__("Refresh BigQuery Table Metadata"),
+    href='/bigquery/refresh_metadata/',
+    category='Sources',
+    category_label=__("Sources"),
+    category_icon='fa-database',
+    icon="fa-cog")
+
+appbuilder.add_separator("Sources", )

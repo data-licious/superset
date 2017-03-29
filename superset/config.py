@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 import imp
 import json
 import os
+from collections import OrderedDict
 
 from dateutil import tz
 from flask_appbuilder.security.manager import AUTH_DB
@@ -178,11 +179,13 @@ DRUID_DATA_SOURCE_BLACKLIST = []
 # --------------------------------------------------
 # Modules, datasources and middleware to be registered
 # --------------------------------------------------
+
 DEFAULT_MODULE_DS_MAP = {
     'superset.connectors.druid.models': ['DruidDatasource'],
     'superset.connectors.sqla.models': ['SqlaTable'],
     'superset.connectors.bigquery.models': ['BigQueryTable'],
 }
+
 ADDITIONAL_MODULE_DS_MAP = {}
 ADDITIONAL_MIDDLEWARE = []
 

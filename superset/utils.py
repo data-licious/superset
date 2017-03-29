@@ -41,7 +41,6 @@ from sqlalchemy.types import TypeDecorator, TEXT
 
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 
-
 EPOCH = datetime(1970, 1, 1)
 DTTM_ALIAS = '__timestamp'
 
@@ -126,6 +125,7 @@ class memoized(object):  # noqa
 def js_string_to_python(item):
     return None if item in ('null', 'undefined') else item
 
+
 def js_string_to_num(item):
     if item.isdigit():
         return int(item)
@@ -134,6 +134,7 @@ def js_string_to_num(item):
         s = float(item)
     except ValueError:
         return s
+
 
 class DimSelector(Having):
     def __init__(self, **args):
@@ -210,7 +211,6 @@ def parse_human_timedelta(s):
 
 
 class JSONEncodedDict(TypeDecorator):
-
     """Represents an immutable structure as a json-encoded string."""
 
     impl = TEXT
@@ -240,7 +240,6 @@ def datetime_f(dttm):
 
 
 def base_json_conv(obj):
-
     if isinstance(obj, numpy.int64):
         return int(obj)
     elif isinstance(obj, numpy.bool_):
@@ -354,8 +353,8 @@ def generic_find_constraint_name(table, columns, referenced, db):
 
     for fk in t.foreign_key_constraints:
         if (
-                fk.referred_table.name == referenced and
-                set(fk.column_keys) == columns):
+                        fk.referred_table.name == referenced and
+                        set(fk.column_keys) == columns):
             return fk.name
 
 
@@ -392,6 +391,7 @@ class timeout(object):
     """
     To be used in a ``with`` block and timeout its content.
     """
+
     def __init__(self, seconds=1, error_message='Timeout'):
         self.seconds = seconds
         self.error_message = error_message
@@ -415,6 +415,7 @@ class timeout(object):
             logging.warning("timeout can't be used in the current context")
             logging.exception(e)
 
+
 def pessimistic_connection_handling(target):
     @event.listens_for(target, "checkout")
     def ping_connection(dbapi_connection, connection_record, connection_proxy):
@@ -431,7 +432,6 @@ def pessimistic_connection_handling(target):
 
 
 class QueryStatus(object):
-
     """Enum-type class for query statuses"""
 
     STOPPED = 'stopped'
@@ -559,6 +559,7 @@ def has_access(f):
         return redirect(url_for(
             self.appbuilder.sm.auth_view.__class__.__name__ + ".login",
             next=request.path))
+
     f._permission_name = permission_str
     return functools.update_wrapper(wraps, f)
 
@@ -572,3 +573,7 @@ def setup_cache(app, cache_config):
     """Setup the flask-cache on a flask app"""
     if cache_config and cache_config.get('CACHE_TYPE') != 'null':
         return Cache(app, config=cache_config)
+
+
+def get_bigquery_table_full_name(project_id, dataset_name, table_name):
+    return "%s:%s.%s" % (project_id, dataset_name, table_name)

@@ -1,4 +1,4 @@
-"""Create bigquery_table
+"""Create BigQuery tables
 
 Revision ID: 6f23fece6036
 Revises: 979c03af3341

@@ -237,7 +237,7 @@ class BigQueryTable(Model, BaseDatasource):
     perm = Column(String(1000))
 
     export_fields = (
-        'table_name', 'description', 'default_endpoint', 'is_featured', 'offset', 'cache_timeout', 'params'
+        'table_name', 'description', 'is_featured', 'offset', 'cache_timeout', 'params'
     )
 
     @property

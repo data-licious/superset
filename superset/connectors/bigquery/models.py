@@ -218,7 +218,7 @@ class BigQueryTable(Model, BaseDatasource):
     metric_class = BigQueryMetric
     column_class = BigQueryColumn
 
-    baselink = "bigquerymodelview"
+    baselink = "bigquerytablemodelview"
 
     __tablename__ = 'bigquery_table'
     id = Column(Integer, primary_key=True)
@@ -351,6 +351,7 @@ class BigQueryTable(Model, BaseDatasource):
             bigquery_column.generate_metrics()
             self.columns.append(bigquery_column)
             session.flush()
+        session.commit()
 
 
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)

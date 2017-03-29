@@ -139,10 +139,10 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
         # table object is already added to the session
         if number_of_existing_tables > 1:
             raise Exception(get_datasource_exist_error_mgs(
-                datasource.full_name))
+                table.full_name))
 
     def post_add(self, table):
-        table.generate_metrics()
+        table.refresh_metadata()
         security.merge_perm(sm, 'datasource_access', table.get_perm())
         if table.schema:
             security.merge_perm(sm, 'schema_access', table.schema_perm)
@@ -158,42 +158,3 @@ appbuilder.add_view(
     category="Sources",
     category_label=__("Sources"),
     icon="fa-table")
-
-
-class BigQuery(BaseSupersetView):
-    """The base views for Superset!"""
-
-    @has_access
-    @expose("/refresh_metadata/")
-    def refresh_metadata(self):
-        """endpoint that refreshes BigQuery Table metadata"""
-        session = db.session()
-        for table in session.query(ConnectorRegistry.sources['bigquery']).all():
-            try:
-                table.refresh_metadata()
-            except Exception as e:
-                flash(
-                    "Error while processing table '{}'\n{}".format(
-                        table.table_name, utils.error_msg_from_exception(e)),
-                    "danger")
-                logging.exception(e)
-                return redirect('/bigquerytablemodelview/list/')
-            table.metadata_last_refreshed = datetime.now()
-            flash(
-                "Refreshed metadata from %s" % table.name, 'info')
-        session.commit()
-        return redirect("/bigquerytablemodelview/list/")
-
-
-appbuilder.add_view_no_menu(BigQuery)
-
-appbuilder.add_link(
-    "Refresh BigQuery Table Metadata",
-    label=__("Refresh BigQuery Table Metadata"),
-    href='/bigquery/refresh_metadata/',
-    category='Sources',
-    category_label=__("Sources"),
-    category_icon='fa-database',
-    icon="fa-cog")
-
-appbuilder.add_separator("Sources", )

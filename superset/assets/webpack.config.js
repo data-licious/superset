@@ -13,12 +13,13 @@ const VERSION_STRING = JSON.parse(fs.readFileSync('package.json')).version;
 const config = {
   entry: {
     'css-theme': APP_DIR + '/javascripts/css-theme.js',
-    common: APP_DIR + '/javascripts/common.js',
-    dashboard: ['babel-polyfill', APP_DIR + '/javascripts/dashboard/Dashboard.jsx'],
-    explorev2: ['babel-polyfill', APP_DIR + '/javascripts/explorev2/index.jsx'],
-    sqllab: ['babel-polyfill', APP_DIR + '/javascripts/SqlLab/index.jsx'],
-    welcome: ['babel-polyfill', APP_DIR + '/javascripts/welcome.js'],
-    profile: ['babel-polyfill', APP_DIR + '/javascripts/profile/index.jsx'],
+    // common: APP_DIR + '/javascripts/common.js',
+    // dashboard: ['babel-polyfill', APP_DIR + '/javascripts/dashboard/Dashboard.jsx'],
+    // explorev2: ['babel-polyfill', APP_DIR + '/javascripts/explorev2/index.jsx'],
+    // sqllab: ['babel-polyfill', APP_DIR + '/javascripts/SqlLab/index.jsx'],
+    bigquery_sqllab: ['babel-polyfill', APP_DIR + '/javascripts/BigQuerySqlLab/index.jsx'],
+    // welcome: ['babel-polyfill', APP_DIR + '/javascripts/welcome.js'],
+    // profile: ['babel-polyfill', APP_DIR + '/javascripts/profile/index.jsx'],
   },
   output: {
     path: BUILD_DIR,
@@ -128,6 +129,6 @@ const config = {
   ],
 };
 if (process.env.NODE_ENV === 'production') {
-  config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+  // config.plugins.push(new webpack.optimize.UglifyJsPlugin());
 }
 module.exports = config;

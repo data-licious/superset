@@ -31,7 +31,7 @@ from sqlalchemy import create_engine
 from werkzeug.routing import BaseConverter
 
 from superset import (
-    appbuilder, cache, db, viz, utils, app,
+    appbuilder, cache, db, viz, utils, app, dataframe,
     sm, sql_lab, results_backend, security,
 )
 from superset.legacy import cast_form_data
@@ -39,6 +39,8 @@ from superset.utils import has_access
 from superset.connectors.connector_registry import ConnectorRegistry
 import superset.models.core as models
 from superset.sql_parse import SupersetQuery
+from superset.connectors.bigquery.models import BigQueryTable
+from google.cloud import bigquery
 
 from .base import (
     SupersetModelView, BaseSupersetView, DeleteMixin,
@@ -2032,6 +2034,75 @@ class Superset(BaseSupersetView):
             return json_error_response("{}".format(e))
         return json_success(data)
 
+    @has_access_api
+    @expose("/bigquery_sql_json/", methods=['POST', 'GET'])
+    @log_this
+    def bigquery_sql_json(self):
+        """Runs arbitrary sql and returns and json"""
+        async = request.form.get('runAsync') == 'true'
+        sql = request.form.get('sql')
+        database_id = request.form.get('database_id')
+        session = db.session()
+        bigquery_table = session.query(BigQueryTable).filter_by(id=database_id).one()
+
+        if not bigquery_table:
+            json_error_response(
+                'Database with id {} is missing.'.format(database_id))
+
+        session.commit()
+
+        # Sync request.
+        try:
+            SQLLAB_TIMEOUT = config.get("SQLLAB_TIMEOUT")
+            with utils.timeout(
+                    seconds=SQLLAB_TIMEOUT,
+                    error_message=(
+                        "The query exceeded the {SQLLAB_TIMEOUT} seconds "
+                        "timeout. You may want to run your query as a "
+                        "`CREATE TABLE AS` to prevent timeouts."
+                    ).format(**locals())):
+
+                client = bigquery.Client()
+                # bigquery_table.reload()
+                query = client.run_sync_query(sql)
+                query.max_results = 100
+                query.run()                    
+
+                column_names = ([column.column_name for column in bigquery_table.columns])
+                column_names = sql_lab.dedup(column_names)
+                cdf = dataframe.SupersetDataFrame(pd.DataFrame(
+                    list(query.rows), columns=column_names))
+                
+                payload = {
+                    'query_id': 0,
+                    'status': QueryStatus.SUCCESS,
+                    'data': cdf.data if cdf.data else [],
+                    'columns': cdf.columns if cdf.columns else [],
+                    'query': {
+                        'rows': len(query.rows),
+                        'progress': 100,
+                        'status': QueryStatus.SUCCESS,
+                        'database_id': int(database_id),
+                        'limit': 100,
+                        'sql': sql,
+                        'schema': '',
+                        'select_as_cta': request.form.get('select_as_cta') == 'true',
+                        'start_time': utils.now_as_float(),
+                        'tab_name': request.form.get('tab'),
+                        'sql_editor_id': request.form.get('sql_editor_id'),
+                        'tmp_table_name': '',
+                        'user_id': int(g.user.get_id()),
+                        'client_id': request.form.get('client_id'),
+                    },
+                }
+
+                data = json.dumps(payload)
+
+        except Exception as e:
+            logging.exception(e)
+            return json_error_response("{}".format(e))
+        return json_success(data)
+
     @has_access
     @expose("/csv/<client_id>")
     @log_this
@@ -2236,6 +2307,18 @@ class Superset(BaseSupersetView):
             'superset/sqllab.html',
             bootstrap_data=json.dumps(d, default=utils.json_iso_dttm_ser)
         )
+
+    @has_access
+    @expose("/bigquery-sqllab")
+    def bigquery_sqllab(self):
+        """BigQuery SQL Editor"""
+        d = {
+            'defaultDbId': config.get('SQLLAB_DEFAULT_DBID'),
+        }
+        return self.render_template(
+            'superset/bigquery_sqllab.html',
+            bootstrap_data=json.dumps(d, default=utils.json_iso_dttm_ser)
+        )
 appbuilder.add_view_no_menu(Superset)
 
 
@@ -2267,6 +2350,14 @@ appbuilder.add_link(
     category_icon="fa-flask",
     icon="fa-flask",
     category='SQL Lab')
+
+appbuilder.add_link(
+    'BigQuery SQL Editor',
+    href='/superset/bigquery-sqllab',
+    category_icon="fa-flask",
+    icon="fa-flask",
+    category='SQL Lab')
+
 appbuilder.add_link(
     'Query Search',
     href='/superset/sqllab#search',

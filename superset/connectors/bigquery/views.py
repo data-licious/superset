@@ -103,7 +103,7 @@ class BigQueryTableModelView(SupersetModelView, DeleteMixin):  # noqa
     datamodel = SQLAInterface(models.BigQueryTable)
     list_widget = ListWidgetWithCheckboxes
     list_columns = [
-        'datasource_link', 'changed_by_', 'changed_on_', 'offset', 'metadata_last_refreshed']
+        'id', 'name', 'datasource_link', 'changed_by_', 'changed_on_', 'offset', 'metadata_last_refreshed']
     order_columns = [
         'datasource_link', 'changed_on_', 'offset']
     related_views = [BigQueryColumnInlineView, BigQueryMetricInlineView]

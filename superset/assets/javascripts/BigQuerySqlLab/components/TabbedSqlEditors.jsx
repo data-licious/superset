@@ -31,7 +31,7 @@ class TabbedSqlEditors extends React.PureComponent {
       sqlLabUrl,
       queriesArray: [],
       dataPreviewQueries: [],
-      hideLeftBar: false,
+      hideLeftBar: true,
     };
   }
   componentDidMount() {

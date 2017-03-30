@@ -2068,7 +2068,10 @@ class Superset(BaseSupersetView):
                 query.max_results = 100
                 query.run()                    
 
-                column_names = ([column.column_name for column in bigquery_table.columns])
+                column_names = ([column.name for column in query.schema])
+
+
+
                 column_names = sql_lab.dedup(column_names)
                 cdf = dataframe.SupersetDataFrame(pd.DataFrame(
                     list(query.rows), columns=column_names))

@@ -353,6 +353,11 @@ class BigQueryTable(Model, BaseDatasource):
             session.flush()
         session.commit()
 
+    def query(self, query_obj):
+        print(query_obj)
+        flasher(json.dumps(query_obj), 'info')
+        pass
+
 
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)
 sa.event.listen(BigQueryTable, 'after_update', set_perm)

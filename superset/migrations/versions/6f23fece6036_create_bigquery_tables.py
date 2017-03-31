@@ -44,6 +44,7 @@ def upgrade():
     sa.Column('column_name', sa.String(length=255), nullable=True),
     sa.Column('verbose_name', sa.String(length=1024), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('is_dttm', sa.Boolean(), default=False),
     sa.Column('expression', sa.Text(), default=''),
     sa.Column('type', sa.String(length=32), nullable=True),
     sa.Column('groupby', sa.Boolean(), nullable=True),

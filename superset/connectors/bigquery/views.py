@@ -25,11 +25,11 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'table', 'column_name', 'description', 'expression',
+        'table', 'column_name', 'description', 'expression', 'is_dttm',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
-        'table', 'column_name', 'type', 'expression', 'groupby', 'filterable', 'count_distinct',
+        'table', 'column_name', 'type', 'expression', 'is_dttm', 'groupby', 'filterable', 'count_distinct',
         'sum', 'min', 'max']
     can_delete = False
     page_size = 500

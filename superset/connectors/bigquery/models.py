@@ -52,9 +52,10 @@ class BigQueryColumn(Model, BaseColumn):
         enable_typechecks=False, foreign_keys=[table_id])
 
     expression = Column(Text, default='')
+    is_dttm = Column(Boolean, default=False)
 
     export_fields = (
-        'column_name', 'is_active', 'type', 'expression', 'groupby',
+        'column_name', 'is_active', 'type', 'is_dttm', 'expression', 'groupby',
         'count_distinct', 'sum', 'avg', 'max', 'min', 'filterable',
         'description'
     )
@@ -420,7 +421,6 @@ class BigQueryTable(Model, BaseDatasource):
         # @TODO remove this later
         granularity = None
 
-
         cols = {col.column_name: col for col in self.columns}
         metrics_dict = {m.metric_name: m for m in self.metrics}
 
@@ -608,6 +608,13 @@ class BigQueryTable(Model, BaseDatasource):
         logging.info(sql)
         sql = sqlparse.format(sql, reindent=True)
         return sql
+
+    @property
+    def dttm_cols(self):
+        l = [c.column_name for c in self.columns if c.is_dttm]
+        if self.main_dttm_col and self.main_dttm_col not in l:
+            l.append(self.main_dttm_col)
+        return l
 
 
 sa.event.listen(BigQueryTable, 'after_insert', set_perm)

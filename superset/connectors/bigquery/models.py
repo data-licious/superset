@@ -120,21 +120,12 @@ class BigQueryColumn(Model, BaseColumn):
             ))
         if self.count_distinct:
             name = 'count_distinct__' + self.column_name
-            if self.type == 'hyperUnique' or self.type == 'thetaSketch':
-                metrics.append(BigQueryMetric(
-                    metric_name=name,
-                    verbose_name='COUNT(DISTINCT {})'.format(self.column_name),
-                    metric_type=self.type,
-                    expression='COUNT(DISTINCT {})'.format(self.column_name),
-                ))
-            else:
-                mt = 'count_distinct'
-                metrics.append(BigQueryMetric(
-                    metric_name=name,
-                    verbose_name='COUNT(DISTINCT {})'.format(self.column_name),
-                    metric_type='count_distinct',
-                    expression='COUNT(DISTINCT {})'.format(self.column_name),
-                ))
+            metrics.append(BigQueryMetric(
+                metric_name=name,
+                verbose_name='COUNT(DISTINCT {})'.format(self.column_name),
+                metric_type='count_distinct',
+                expression='COUNT(DISTINCT {})'.format(self.column_name),
+            ))
         session = get_session()
         new_metrics = []
         for metric in metrics:
@@ -341,11 +332,12 @@ class BigQueryTable(Model, BaseDatasource):
             if column.field_type == "STRING":
                 bigquery_column.groupby = True
                 bigquery_column.filterable = True
-            elif column.field_type == "INTEGER":
+            elif column.field_type == "INTEGER" or column.field_type == "FLOAT":
                 bigquery_column.sum = True
                 bigquery_column.min = True
                 bigquery_column.max = True
                 bigquery_column.avg = True
+                bigquery_column.count_distinct = True
             elif column.field_type == "RECORD":
                 # @TODO implement recursive field check
                 pass

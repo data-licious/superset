@@ -25,11 +25,11 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'table', 'column_name', 'description',
+        'table', 'column_name', 'description', 'expression',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
-        'table', 'column_name', 'type', 'groupby', 'filterable', 'count_distinct',
+        'table', 'column_name', 'type', 'expression', 'groupby', 'filterable', 'count_distinct',
         'sum', 'min', 'max']
     can_delete = False
     page_size = 500
@@ -43,6 +43,7 @@ class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'sum': _("Sum"),
         'min': _("Min"),
         'max': _("Max"),
+        'expression': _("Expression"),
     }
     description_columns = {
     }
@@ -59,9 +60,9 @@ appbuilder.add_view_no_menu(BigQueryColumnInlineView)
 
 class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryMetric)
-    list_columns = ['table', 'metric_name', 'verbose_name', 'metric_type']
+    list_columns = ['table', 'metric_name', 'verbose_name', 'metric_type', 'expression',]
     edit_columns = [
-        'table', 'metric_name', 'description', 'verbose_name', 'metric_type', 'd3format', 'is_restricted']
+        'table', 'metric_name', 'description', 'verbose_name', 'metric_type', 'expression', 'd3format', 'is_restricted']
     add_columns = edit_columns
     page_size = 500
     validators_columns = {
@@ -81,6 +82,7 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'description': _("Description"),
         'verbose_name': _("Verbose Name"),
         'metric_type': _("Type"),
+        'expression': _("Expression"),
     }
 
     def post_add(self, metric):

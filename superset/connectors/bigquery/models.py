@@ -51,8 +51,10 @@ class BigQueryColumn(Model, BaseColumn):
         backref=backref('columns', cascade='all, delete-orphan'),
         enable_typechecks=False, foreign_keys=[table_id])
 
+    expression = Column(Text, default='')
+
     export_fields = (
-        'column_name', 'is_active', 'type', 'groupby',
+        'column_name', 'is_active', 'type', 'expression', 'groupby',
         'count_distinct', 'sum', 'avg', 'max', 'min', 'filterable',
         'description'
     )
@@ -448,7 +450,7 @@ class BigQueryTable(Model, BaseDatasource):
             for s in groupby:
                 col = cols[s]
                 outer = col.expression
-                inner = col.expression.label(col.column_name + '__')
+                inner = col.column_name + '__'
 
                 groupby_exprs.append(outer)
                 select_exprs.append(outer)

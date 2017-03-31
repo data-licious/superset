@@ -333,6 +333,7 @@ class BigQueryTable(Model, BaseDatasource):
                 bigquery_column = BigQueryColumn(table_id=self.id, column_name=column.name, type=column.field_type)
                 bigquery_column.verbose_name = bigquery_column.column_name
                 bigquery_column.description = column.description
+                bigquery_column.expression = bigquery_column.column_name
 
                 session.add(bigquery_column)
 
@@ -357,7 +358,8 @@ class BigQueryTable(Model, BaseDatasource):
         qry_start_dttm = datetime.now()
         qry = self.get_sqla_query(**query_obj)
         sql = self.get_query_str(**query_obj)
-
+        print(query_obj)
+        print(sql)
         status = QueryStatus.SUCCESS
         error_message = None
         df = None

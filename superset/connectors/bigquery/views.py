@@ -16,7 +16,7 @@ from superset.connectors.connector_registry import ConnectorRegistry
 from superset.utils import has_access
 from superset.views.base import BaseSupersetView
 from superset.views.base import (
-    SupersetModelView, validate_json, DeleteMixin, ListWidgetWithCheckboxes,
+    SupersetModelView, DeleteMixin, ListWidgetWithCheckboxes,
     DatasourceFilter, get_datasource_exist_error_mgs)
 
 from . import models
@@ -25,7 +25,7 @@ from . import models
 class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryColumn)
     edit_columns = [
-        'table', 'column_name', 'description', 'dimension_spec_json',
+        'table', 'column_name', 'description',
         'groupby', 'count_distinct', 'sum', 'min', 'max']
     add_columns = edit_columns
     list_columns = [
@@ -45,14 +45,10 @@ class BigQueryColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'max': _("Max"),
     }
     description_columns = {
-        'dimension_spec_json': utils.markdown(
-            "",
-            True),
     }
 
     def post_update(self, col):
         col.generate_metrics()
-        utils.validate_json(col.dimension_spec_json)
 
     def post_add(self, col):
         self.post_update(col)
@@ -65,11 +61,10 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     datamodel = SQLAInterface(models.BigQueryMetric)
     list_columns = ['table', 'metric_name', 'verbose_name', 'metric_type']
     edit_columns = [
-        'table', 'metric_name', 'description', 'verbose_name', 'metric_type', 'json', 'd3format', 'is_restricted']
+        'table', 'metric_name', 'description', 'verbose_name', 'metric_type', 'd3format', 'is_restricted']
     add_columns = edit_columns
     page_size = 500
     validators_columns = {
-        'json': [validate_json],
     }
     description_columns = {
         'metric_type': utils.markdown(
@@ -86,7 +81,6 @@ class BigQueryMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
         'description': _("Description"),
         'verbose_name': _("Verbose Name"),
         'metric_type': _("Type"),
-        'json': _("JSON"),
     }
 
     def post_add(self, metric):

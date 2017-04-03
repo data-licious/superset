@@ -42,7 +42,7 @@ setup(
     zip_safe=False,
     scripts=['superset/bin/superset'],
     install_requires=[
-        'Flask', # Add version
+        'Flask==0.12',
         'boto3==1.4.4',
         'celery==3.1.23',
         'cryptography==1.7.2',
@@ -69,7 +69,7 @@ setup(
         'sqlparse==0.1.19',
         'thrift>=0.9.3',
         'thrift-sasl>=0.2.1',
-        'google-cloud-bigquery', # Add version
+        'google-cloud-bigquery==0.24.0',
     ],
     extras_require={
         'cors': ['Flask-Cors>=2.0.0'],
